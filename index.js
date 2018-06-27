@@ -2,21 +2,25 @@
 function memoize(fn) {
     let _cache = new Map(),
         _limit = 1000,
-        _time = 10000
+        _time = 1000*60*60*24
     
-    function memoized(...args) {
+    function memoized(...args) {     
         const key = JSON.stringify(args)
         return get(key) || set(key, fn.apply(this, args))
     }
     
     //Set item limit of cache
     memoized.limit = function(limit) {
+        if (typeof limit !== 'number')
+            throw new TypeError()
         _limit = limit
         return this
     }
     
     //Set expire time of cache items in ms (refreshes all entries)
     memoized.expire = function(time) {
+        if (typeof time !== 'number')
+            throw new TypeError()
         _time = time
         return this
     }
@@ -45,7 +49,7 @@ function memoize(fn) {
 
     //Returns item.value of given key (delete item if time is expired)
     function get(key) {
-        let entry = _cache.get(key)
+        const entry = _cache.get(key)
         if (entry) {
             if (entry.expire + _time > Date.now())
                 return entry.value
@@ -61,7 +65,9 @@ function memoize(fn) {
         return this
     }
 
-    return memoized
+    if (fn instanceof Function)
+        return memoized
+    throw new TypeError()
 }
 
 module.exports = memoize
